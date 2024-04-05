@@ -1,3 +1,10 @@
+# Client:                Server:
+# - N_msg = input("")    - ACK = msg.seq
+# - win_size = 5         - win_size = 5
+# - msg = 'abcd'         - go_back_n() or selective_repeat()
+# - seq = 100            - in-order delivery (print if out-of-order)
+# - print statements x4
+
 #Server
 from socket import *
 
