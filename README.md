@@ -22,9 +22,9 @@ The RTT for this message was 0.010540962219238281 seconds
 ``` 
 
 # code purpose
-```
+
 The purpose of this code is to build on top of UDP by adding extra headers to create more reliability of ensuring messages are being sent.
-```
+
 # architecture/design
 ```
 # self.windowSize = windowSize
@@ -36,6 +36,4 @@ self.ttl  =  ttl
 self.payload  =  payload
 ```
 # Error Detection
-```
 Packets are being sent as strings, but to increment SEQ# or ACK then we will need to convert to integer type.
-```
