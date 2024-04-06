@@ -1,14 +1,21 @@
-# Client:                Server:
-# - N_msg = input("")    - ACK = msg.seq
-# - win_size = 5         - win_size = 5
-# 				         - go_back_n() or selective_repeat()
-# - seq = 100            - in-order delivery (print if out-of-order)
-# - print statements x4
+# Client: 
+# TODO
+# - win_size = 5
+# - seq = 100   
+# - print statements
 
-#Client
 from socket import *
 import time
 from Message import Message
+
+def updateList(listOfMessages):
+	valToRemove = listOfMessages.pop(0)
+	return listOfMessages
+
+
+################################################
+#####		 		  MAIN				   #####
+################################################
 
 serverName = 'localhost' 
 serverPort = 12000
@@ -16,42 +23,48 @@ clientSocket = socket(AF_INET, SOCK_DGRAM)
 
 # part i) User Input
 print('Hi, please input the following:')
-n_messages = input('how many total N messages would you like to send: ')  
+nMessages = input('how many total N messages would you like to send: ')  
 print() 
 
-#format: nth message: b_bytes
-list_of_messages = {}
-for i in range(int(n_messages)):
+#populate list of messages
+listOfMessages = {} #format: [nth message: Message()]
+for i in range(int(nMessages)):
 	seq = 100
 	ack = 100
 	ttl = 5
 	payload = "abcd"
 
-	full_message = Message(seq, ack, ttl, payload)
+	fullMessage = Message(seq, ack, ttl, payload)
 	
-	list_of_messages[str(i)] = full_message
-print(list_of_messages)
+	listOfMessages[str(i)] = fullMessage
 print('Processing...')
 
 # part ii) Sending message and part iii) Round Trip Time
-for index in list_of_messages:
+for index in listOfMessages:
 	
-	packet = list_of_messages[index].convertToPacketPlus()
+	#convert headers and message to string (aka packet)
+	packet = listOfMessages[index].convertToPacket()
 	print("sending message: ", packet)
-	start_time = time.time()
+
+	#Send payload
+	startTime = time.time()
 	clientSocket.sendto(packet.encode(), (serverName, serverPort))
+	print("Message with SEQ# ", listOfMessages[index].seq ," sent")
 	
+	#Receive ACK
 	modifiedMessage, serverAddress = clientSocket.recvfrom(2048)
 	print(modifiedMessage.decode()) 
-	end_time = time.time()
-	print("The RTT for this message was ", (end_time - start_time), " seconds")
+	endTime = time.time()
+	print("The RTT for this message was ", (endTime - startTime), " seconds")
+
+	#confirm ACK (TODO)
+	#update list of messages
+	listOfMessages = updateList(listOfMessages)
+
 clientSocket.close()
 
 
 #Print Statements
-#	- SEQ of each message being sent using the following string : 
-print("Message with SEQ# ___ sent")
-
 #	- SEQ of each acknowledges message using the following string: 
 print("Message with SEQ# ___ ACKd")
 
