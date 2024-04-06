@@ -1,7 +1,8 @@
 
-# how to use
+# How to use
 Run /hw3/Server.py
 ```python Server.py```
+
 Run /hw3/Client.py 
 ```python Client.py```
 
@@ -21,11 +22,11 @@ Message with SEQ# 100 sent
 The RTT for this message was 0.010540962219238281 seconds
 ``` 
 
-# code purpose
+# Purpose of this code
 
 The purpose of this code is to build on top of UDP by adding extra headers to create more reliability of ensuring messages are being sent.
 
-# architecture/design
+# Architecture/Design
 ```
 # self.windowSize = windowSize
 # TCP checksum?
