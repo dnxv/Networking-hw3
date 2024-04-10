@@ -4,17 +4,58 @@
 # - seq = 100   
 # - print statements
 
+# Sliding window = 5 ||| [A, B, C, D, E], F, G, H, I, J, K, L, M
+# Client: send window (A - E)
+# Server: send ACK (A - E)
+# Client: wait for ACK A
+# Client: if ACK A, slide window 		||| A, [B, C, D, E, F], G, H, I, J, K, L, M
+# Client: if no ACK A, send window 		||| [A, B, C, D, E], F, G, H, I, J, K, L, M
+# Client: if ACK (A - E), send window 	||| A, B, C, D, E, [F, G, H, I, J], K, L, M
+# 
+# Handle case: when window is here: ||| A, B, C, D, E, F, G, H, I, [J, K, L, M]
+# when the last segment is smaller than window size (in this case 4 < 5)
+
+################################################
+#####		 					IMPORTS				   				 #####
+################################################
+
 from socket import *
-import time
 from Message import Message
+
+################################################
+#####		 					METHODS								   #####
+################################################
+
+def populateMessages(listOfMessages, nMessages):
+	for i in range(int(nMessages)):
+		if i == 0:
+			listOfMessages[0] = Message(100, 1, 2, 4, "abcd") # seq, ack, ttl, payloadLength, payload
+		else:
+			seq = listOfMessages[i - 1].seq + listOfMessages[i - 1].payloadLength
+			ack = i + 1
+			ttl = 2
+			payloadLength = 4
+			payload = "abcd"
+
+			fullMessage = Message(seq, ack, ttl, payloadLength, payload)
+		
+			listOfMessages[i] = fullMessage
 
 def updateList(listOfMessages):
 	valToRemove = listOfMessages.pop(0)
 	return listOfMessages
 
+def deconstructMessage(message):
+    splitMessage = message.split('.')
+    seq = splitMessage[0]
+    ack = splitMessage[1]
+    ttl = splitMessage[2]
+    payloadLength = splitMessage[3]
+    payload = splitMessage[4]
+    return Message(seq, ack, ttl, payloadLength, payload)
 
 ################################################
-#####		 		  MAIN				   #####
+#####		 		  			MAIN								   #####
 ################################################
 
 serverName = 'localhost' 
@@ -28,45 +69,34 @@ print()
 
 #populate list of messages
 listOfMessages = {} #format: [nth message: Message()]
-for i in range(int(nMessages)):
-	seq = 100
-	ack = 100
-	ttl = 5
-	payload = "abcd"
-
-	fullMessage = Message(seq, ack, ttl, payload)
-	
-	listOfMessages[str(i)] = fullMessage
-print('Processing...')
+populateMessages(listOfMessages, nMessages)
 
 # part ii) Sending message and part iii) Round Trip Time
 for index in listOfMessages:
-	
+
 	#convert headers and message to string (aka packet)
-	packet = listOfMessages[index].convertToPacket()
-	print("sending message: ", packet)
+	packet = listOfMessages[index].convertToPacketPlus()
 
 	#Send payload
-	startTime = time.time()
 	clientSocket.sendto(packet.encode(), (serverName, serverPort))
-	print("Message with SEQ# ", listOfMessages[index].seq ," sent")
+	print("Message with SEQ#", listOfMessages[index].seq ,"sent.")
+	print("Payload:", packet)
 	
 	#Receive ACK
+	print()
 	modifiedMessage, serverAddress = clientSocket.recvfrom(2048)
-	print(modifiedMessage.decode()) 
-	endTime = time.time()
-	print("The RTT for this message was ", (endTime - startTime), " seconds")
+	receivedMessage = deconstructMessage(modifiedMessage.decode())
+	print("Message with SEQ#", receivedMessage.ack ,"ACKd. Payload: ", modifiedMessage)
+	print()
 
 	#confirm ACK (TODO)
 	#update list of messages
-	listOfMessages = updateList(listOfMessages)
+	# listOfMessages = updateList(listOfMessages)
 
 clientSocket.close()
 
 
 #Print Statements
-#	- SEQ of each acknowledges message using the following string: 
-print("Message with SEQ# ___ ACKd")
 
 #	- Window size before every transmission is sent and after every ACK is received using the following string: 
 print("Current window size: ___")

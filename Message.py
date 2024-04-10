@@ -1,5 +1,5 @@
 class Message:
-  def __init__(self, seq, ack, ttl, payload):
+  def __init__(self, seq, ack, ttl, payloadLength, payload):
 
     # self.windowSize = windowSize
     # TCP checksum?
@@ -7,6 +7,7 @@ class Message:
     self.seq = seq
     self.ack = ack
     self.ttl = ttl
+    self.payloadLength = payloadLength
     self.payload = payload
 
   def convertToPacket(self):
@@ -24,7 +25,7 @@ class Message:
         1001005abcd
     """
     packet = ""
-    packet += "" + str(self.seq) + str(self.ack) + str(self.ttl) + self.payload
+    packet += "" + str(self.seq) + str(self.ack) + str(self.ttl) + str(self.payloadLength) + self.payload
     return packet
   
   def convertToPacketPlus(self):
@@ -41,5 +42,5 @@ class Message:
         100.100.5.abcd
     """
     packet = ""
-    packet += "" + str(self.seq) + "." + str(self.ack) + "." + str(self.ttl) + "." + self.payload
+    packet += "" + str(self.seq) + "." + str(self.ack) + "." + str(self.ttl) + "." + str(self.payloadLength) + "." + self.payload
     return packet

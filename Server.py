@@ -4,9 +4,27 @@
 # - go_back_n() or selective_repeat()
 # - in-order delivery (print if out-of-order)
 
-#Server
+################################################
+#####		 		IMPORTS				   #####
+################################################
 from socket import *
+from Message import Message
 
+################################################
+#####               METHODS				   #####
+################################################
+def deconstructMessage(message):
+    splitMessage = message.split('.')
+    seq = splitMessage[0]
+    ack = splitMessage[1]
+    ttl = splitMessage[2]
+    payloadLength = splitMessage[3]
+    payload = splitMessage[4]
+    return seq, ack, ttl, payloadLength, payload 
+
+################################################
+#####		 		 MAIN				   #####
+################################################
 # Create a socket and set the server port
 serverPort = 12000
 serverSocket = socket(AF_INET, SOCK_DGRAM)
@@ -25,12 +43,19 @@ while True:
     print("The address: ", clientAddress)
     print("The content: ", message)
     print()
+
+    #deconstruct message into respective headers
+    seq, ack, ttl, payloadLength, payload = deconstructMessage(message.decode())
+
+    #send back new message
+    # newMessage =       seq,   ack,                            ttl,           payloadLength, 
+    #                    |      |                               |              |  payload
+    newMessage = Message(ack, (int(seq) + int(payloadLength)), (int(ttl) - 1), 0, '')
+    packet = newMessage.convertToPacketPlus()
     
-    #Echo back
-    serverSocket.sendto(message, clientAddress)
-    print("The following message: ", message)
+    serverSocket.sendto(packet.encode(), clientAddress)
+    print("The following message: ", packet)
     print("was sent back to address: ", clientAddress)
-    print('Message echoed back to client')
     print()
     
     counter += 1
