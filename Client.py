@@ -3,6 +3,10 @@
 # - win_size = 5
 # - seq = 100   
 # - print statements
+# - delete extra prints
+# - net em download README.md
+# - retransmission
+# - out of order msgs
 
 # Sliding window = 5 ||| [A, B, C, D, E], F, G, H, I, J, K, L, M
 # Client: send window (A - E)
@@ -25,6 +29,12 @@ from Message import Message
 ################################################
 #####		 					METHODS								   #####
 ################################################
+
+def receive():
+	response, responseAddr = socket.recvfrom(2048)
+	ack,
+
+############################
 
 def populateMessages(listOfMessages, nMessages):
 	for i in range(int(nMessages)):
@@ -79,14 +89,15 @@ for index in listOfMessages:
 
 	#Send payload
 	clientSocket.sendto(packet.encode(), (serverName, serverPort))
-	print("Message with SEQ#", listOfMessages[index].seq ,"sent.")
-	print("Payload:", packet)
+
+	#keep: print("Message with SEQ#", listOfMessages[index].seq ,"sent.")
+	print("Message with SEQ#", listOfMessages[index].seq ,"sent. Payload:", packet) 	#delete
 	
 	#Receive ACK
-	print()
 	modifiedMessage, serverAddress = clientSocket.recvfrom(2048)
 	receivedMessage = deconstructMessage(modifiedMessage.decode())
-	print("Message with SEQ#", receivedMessage.ack ,"ACKd. Payload: ", modifiedMessage)
+	#keep: print("Message with SEQ#", receivedMessage.ack ,"ACKd. Payload: ", modifiedMessage)
+	print("Message with SEQ#", receivedMessage.ack ,"ACKd. Payload: ", modifiedMessage) #delete
 	print()
 
 	#confirm ACK (TODO)

@@ -40,8 +40,7 @@ while True:
     # Wait for a message to arrive
     message, clientAddress = serverSocket.recvfrom(2048)
     print("============ Message: ", counter, "==============")
-    print("The address: ", clientAddress)
-    print("The content: ", message)
+    print("The address: ", clientAddress, " The content: ", message)
     print()
 
     #deconstruct message into respective headers
@@ -54,8 +53,7 @@ while True:
     packet = newMessage.convertToPacketPlus()
     
     serverSocket.sendto(packet.encode(), clientAddress)
-    print("The following message: ", packet)
-    print("was sent back to address: ", clientAddress)
+    print("The following message: ", packet, " was sent back to address: ", clientAddress)
     print()
     
     counter += 1
