@@ -32,7 +32,13 @@ reliability of ensuring messages are being sent.
 
 # Install NetEM
 ```
+#install netem
 sudo apt-get install iproute2
+
+#show your IP interfaces (e.g enp7s0)
+ip address show
+
+#choose an IP interface to use for upcoming commands
 ```
 
 # Tests and their output
@@ -44,13 +50,13 @@ Message: Howdy
 Number times to send: 100
 ```
 ### client and server output:
-<insert image here>
+![alt text](./Condition1.png?raw=true)
 
 ## Condition 2.1 (Artificial Latency, No Loss) 
 - Add enough delay time using NetEm to trigger your timeout timer and generate 
-conditions for retransmission. 
+conditions for retransmission. (8000ms = 8 seconds)
 ```
-sudo tc qdisc add dev enp7s0 root netem delay 250ms
+sudo tc qdisc add dev enp7s0 root netem delay 8000ms
 ```
 ### client and server output:
 Note: output should show timeout and retransmissions
