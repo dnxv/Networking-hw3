@@ -50,7 +50,7 @@ Message: Howdy
 Number times to send: 100
 ```
 ### client and server output:
-![alt text](./Condition1.png?raw=true)
+![alt text](./outputs/Condition1.png?raw=true)
 
 ## Condition 2.1 (Artificial Latency, No Loss) 
 - Add enough delay time using NetEm to trigger your timeout timer and generate 
