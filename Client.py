@@ -1,116 +1,78 @@
-# Client: 
-# TODO
-# - win_size = 5
-# - seq = 100   
-# - print statements
-# - delete extra prints
-# - net em download README.md
-# - retransmission
-# - out of order msgs
-
-# Sliding window = 5 ||| [A, B, C, D, E], F, G, H, I, J, K, L, M
-# Client: send window (A - E)
-# Server: send ACK (A - E)
-# Client: wait for ACK A
-# Client: if ACK A, slide window 		||| A, [B, C, D, E, F], G, H, I, J, K, L, M
-# Client: if no ACK A, send window 		||| [A, B, C, D, E], F, G, H, I, J, K, L, M
-# Client: if ACK (A - E), send window 	||| A, B, C, D, E, [F, G, H, I, J], K, L, M
-# 
-# Handle case: when window is here: ||| A, B, C, D, E, F, G, H, I, [J, K, L, M]
-# when the last segment is smaller than window size (in this case 4 < 5)
-
-################################################
-#####		 					IMPORTS				   				 #####
-################################################
-
+from message import encapsulate, decapsulate
 from socket import *
-from Message import Message
+import time
 
-################################################
-#####		 					METHODS								   #####
-################################################
+socket = socket(AF_INET, SOCK_DGRAM)
+window = 4
+timeout = 60
 
-def receive():
-	response, responseAddr = socket.recvfrom(2048)
-	ack,
+def send(mesg, addr, port, batch):
+    
+    for seq in batch:
+        socket.sendto(encapsulate(seq, mesg).encode(), (addr, port))
+        batch[seq] = time.time() #update time
 
-############################
+def recv(mesg, addr, port, batch):
+    keys = list(batch)
+    while(len(batch) > 0):
+        seqsLeft = list(batch)
 
-def populateMessages(listOfMessages, nMessages):
-	for i in range(int(nMessages)):
-		if i == 0:
-			listOfMessages[0] = Message(100, 1, 2, 4, "abcd") # seq, ack, ttl, payloadLength, payload
-		else:
-			seq = listOfMessages[i - 1].seq + listOfMessages[i - 1].payloadLength
-			ack = i + 1
-			ttl = 2
-			payloadLength = 4
-			payload = "abcd"
+        #counts as first send and also transmit
+        send(mesg, addr, port, batch)
+        
+        for seq in seqsLeft:
+            endtime = time.time()
 
-			fullMessage = Message(seq, ack, ttl, payloadLength, payload)
-		
-			listOfMessages[i] = fullMessage
+            keys = batch.keys()
+            huh = batch
 
-def updateList(listOfMessages):
-	valToRemove = listOfMessages.pop(0)
-	return listOfMessages
+            if seq not in batch:
+                break
 
-def deconstructMessage(message):
-    splitMessage = message.split('.')
-    seq = splitMessage[0]
-    ack = splitMessage[1]
-    ttl = splitMessage[2]
-    payloadLength = splitMessage[3]
-    payload = splitMessage[4]
-    return Message(seq, ack, ttl, payloadLength, payload)
+            diff = endtime - batch[seq]
 
-################################################
-#####		 		  			MAIN								   #####
-################################################
+            if diff >= timeout:
+                print("need to resend")
+                send(mesg, addr, port, batch)
+            else:
+                data, addrServer = socket.recvfrom(2048)
+                ack, mesgRecv = decapsulate(data.decode())
+        
+                if (ack in batch):
+                    batch.pop(ack)
+                    print(ack, mesgRecv)
 
-serverName = 'localhost' 
-serverPort = 12000
-clientSocket = socket(AF_INET, SOCK_DGRAM)
+def main():
+    dest = input('Destination: ')
+    mesg = input('Message: ')
+    total = int(input('Number times to send: '))
 
-# part i) User Input
-print('Hi, please input the following:')
-nMessages = input('how many total N messages would you like to send: ')  
-print() 
+    addr = dest.split(':')[0]
+    port = int(dest.split(':')[1])
 
-#populate list of messages
-listOfMessages = {} #format: [nth message: Message()]
-populateMessages(listOfMessages, nMessages)
+    print('\n-------------------------------------------')
+    for i in range(0, total, window):
+        batchLength = i + window
 
-# part ii) Sending message and part iii) Round Trip Time
-for index in listOfMessages:
+        if (batchLength > total):
+            batchLength = total
 
-	#convert headers and message to string (aka packet)
-	packet = listOfMessages[index].convertToPacketPlus()
+        
+        #send message at this time 115
+        #time passes
+        #timeout: current end: 120 - start: 115...5
+        # if diff >= 5, resend
 
-	#Send payload
-	clientSocket.sendto(packet.encode(), (serverName, serverPort))
+        batch = {} # {0:timestamp, 1:timestamp}
+        for seq in range(i, batchLength): # [0, 1, 2, 3]
+          timestamp = time.time() # 1713064386.4455032
+          batch[seq] = timestamp
 
-	#keep: print("Message with SEQ#", listOfMessages[index].seq ,"sent.")
-	print("Message with SEQ#", listOfMessages[index].seq ,"sent. Payload:", packet) 	#delete
-	
-	#Receive ACK
-	modifiedMessage, serverAddress = clientSocket.recvfrom(2048)
-	receivedMessage = deconstructMessage(modifiedMessage.decode())
-	#keep: print("Message with SEQ#", receivedMessage.ack ,"ACKd. Payload: ", modifiedMessage)
-	print("Message with SEQ#", receivedMessage.ack ,"ACKd. Payload: ", modifiedMessage) #delete
-	print()
+        # send(mesg, addr, port, batch)
+        recv(mesg, addr, port, batch)  # recv([0, 1, 2, 3])
+        print('-------------------------------------------')
 
-	#confirm ACK (TODO)
-	#update list of messages
-	# listOfMessages = updateList(listOfMessages)
+    socket.close()
 
-clientSocket.close()
-
-
-#Print Statements
-
-#	- Window size before every transmission is sent and after every ACK is received using the following string: 
-print("Current window size: ___")
-
-#	- Any timeout event and event handling using the following string: 
-print("Timeout event occurred. Message SEQ# ____ resent.")
+if __name__ == '__main__':
+    main()

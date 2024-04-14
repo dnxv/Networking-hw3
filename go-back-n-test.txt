@@ -1,0 +1,5 @@
+- changed window size to 4
+- going to use [0-9]
+- timeout = 5 seconds
+
+- remove counter from server
