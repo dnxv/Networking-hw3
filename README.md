@@ -1,0 +1,165 @@
+
+# How to use
+Run server.py
+```python server.py```
+
+Run client.py 
+```python client.py```
+
+You will be prompted the following (on Client.py):
+```
+Destination: 
+Message:
+Number times to send: 
+```
+Destination example: `x.x.x.x:12000`
+Message example: `Howdy!`
+Number times example: `10`
+
+Note: hit `Enter` after each input
+
+Here is an example of how it can look
+
+```
+Destination: localhost:12000
+Message: Howdy
+Number times to send: 10
+```
+
+# Purpose of this code
+The purpose of this code is to build on top of UDP by adding extra headers to create more reliability of ensuring messages are being sent.
+
+# Install NetEM (Network Emulator)
+```
+#install netem
+sudo apt-get install iproute2
+
+#show your IP interfaces 
+ip address show
+
+#choose an IP interface to use for upcoming commands (e.g enp7s0)
+```
+
+# Tests and their output
+## Condition 1 (No latency or loss): Send 100 messages from client to server. 
+```python client.py```
+```
+Destination: x.x.x.x:12000
+Message: Howdy
+Number times to send: 100
+```
+### client and server output:
+![](./outputs/Condition1/condition1.png?raw=true)
+
+## Condition 2.1 (Artificial Latency, No Loss) 
+```
+# Add delay time to trigger: timeouts and retransmissions (8000ms = 8 seconds)
+# Example with (IP Interface: enp7s0)
+sudo tc qdisc add dev enp7s0 root netem delay 250ms
+
+# Example with (IP Interface: lo)
+sudo tc qdisc add dev lo root netem delay 8000ms
+```
+### client and server output:
+Note: output should show timeout and retransmissions
+![](./outputs/Condition2.1/condition2-1.png?raw=true)
+
+Our entire output can be located here on Github:
+https://github.com/YoussefE95/Reliable-UDP/tree/master/outputs/Condition1
+
+## Condition 2.2 (No Latency, Artificial Loss) 
+```
+# Add 10% packet loss using NetEm to trigger retransmissions
+sudo tc qdisc add dev enp7s0 root netem loss 10%
+```
+
+IMPORTANT: Please remember to disable the network impairments after tests are done:
+```
+# Stopping Network Impairments
+sudo tc qdisc del dev enp7s0 root netem
+```
+### client and server output:
+Note: output should show retransmissions timeout and retransmissions
+![](./outputs/Condition2.2/condition2-2.png?raw=true)
+
+# Architecture/Design
+client.py
+```
+def send(mesg, addr, port, seqRange):
+  """
+  Sends x messages to server where x is the window size. The server is connected 
+  with a socket with addr and port.
+  
+  Returns:
+    None
+  Example:
+    >>> mesg, addr, port, seqRange = 'Howdy', localhost, 12000, 10
+    >>> send(mesg, addr, port, seqRange)
+  """
+
+def recv(batch):
+  we print only if ack
+  """
+  receives x messages from server while batch is not empty. If the message 
+  hasn't timed out, wait for the acknowledgement for each message. If we 
+  receive the acknowledgement, we remove the corresponding sequence number 
+  from the batch list and prints the acknowledgement + message received 
+  from the server.
+  
+  Returns:
+    None
+  Example:
+    >>> seqRange = range(i, batchLength) # (0, 10)
+    >>> batch = list(seqRange)           # [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    >>> recv(batch)                      # wait/recv & check 0-9 acknowledgements
+  """
+
+def main():
+  """
+  initiate and ask the user for destination addr:port, contents of message, 
+  and total number of N times to send the message. 
+  
+  Iterate through total N messages by steps of size window/"batch" size (e.g. 10). 
+  Most batches are the same size, and we accounted for the case where the last 
+  batch is less than the window size (e.g 3 messages remaining when window/batch 
+  size was 10). As we iterate, we send batches of messages and then wait to receive 
+  their acknowledgements.
+
+  Returns:
+    None
+   """
+```
+
+message.py
+```
+def encapsulate(seq, msg):
+  """
+  Sum up the different parts of the payload including sequence number and the
+  message into a single string. This method also has a max header size of 8. 
+  
+  Returns:
+    string: formated by any necessary padding, sequence number, and the message
+  Example:
+    >>> seq, msg = 0, 'Howdy'
+    >>> packet = encapsulate(seq, msg)
+    >>> packet
+    b'    0howdy' 
+    #Note the padding
+  """
+
+def decapsulate(data):
+  """
+  Split up the data/packet into its respective components: 
+  headers (first 8 characters) and message (anything after 8 characters). 
+  Note: converting string to integers will remove any padding spaces used.
+  
+  Returns:
+    integer, string: the first 8 characters are converted into integers and 
+    the anything after the 8th character is the message
+  Example:
+    >>> data = '  100Howdy'
+    >>> packet = decapsulate(data)
+    >>> packet
+    100, 'Howdy' 
+  """
+```
